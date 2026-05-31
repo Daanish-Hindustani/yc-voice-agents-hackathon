@@ -45,7 +45,7 @@ your voice, anywhere you have a phone.
 
 ## 2. Demo (≤ 60 seconds)
 
-> 📹 **Watch the demo:** _[link here]_  &nbsp;·&nbsp; **Under 60 seconds. Really.**
+> 📹 **Watch the demo:** _[https://canva.link/nwwj2gusd8rc77c]_  &nbsp;·&nbsp; **Under 60 seconds. Really.**
 
 <!-- Replace the link above with your uploaded clip (Loom/YouTube/MP4). Keep it
      to a single live take of the loop below — no narration of section 1. -->
