@@ -1,0 +1,23 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "I'll launch Calculator first."
+          },
+          {
+            "functionCall": {
+              "name": "launch_app",
+              "args": {
+                "bundleId": "com.apple.calculator"
+              }
+            }
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP"
+    }
+  ]
+}

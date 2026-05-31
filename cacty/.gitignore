@@ -1,0 +1,22 @@
+.env
+.claude
+
+# SwiftPM build artifacts
+.build/
+.swiftpm/
+Package.resolved
+
+# Scripts/build-app.sh output
+/build/
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store
+
+/build
+
+/cua-driver

@@ -1,3 +1,10 @@
+> **Building Cacty Voice?** This repo has been extended into a phone-driven Mac
+> automation agent. See **[CACTY_VOICE.md](./CACTY_VOICE.md)** for the project
+> overview, required API keys, and run instructions. The hackathon-starter docs
+> below are kept for reference.
+
+---
+
 # YC Voice Agents Hackathon
 
 Welcome to the YC Voice Agents Hackathon, hosted by [Cekura](https://cekura.com) and [Daily](https://daily.co), in partnership with [NVIDIA](https://nvidia.com), [AWS](https://aws.amazon.com), and [Twilio](https://twilio.com).

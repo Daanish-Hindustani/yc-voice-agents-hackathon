@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Distinct bundle identity for the Cacty Voice build. This copy
+        of Cacty lives alongside the original `com.cacty.app` dev build
+        on the same machine; sharing a bundle id made macOS TCC unable
+        to tell them apart, so Accessibility grants landed ambiguously
+        and never stuck. A unique id + display name gives this build its
+        own TCC record and its own clearly-labeled row in the
+        Privacy & Security lists. Executable name stays "Cacty" so the
+        process name (and existing tooling) is unchanged.
+    -->
+    <key>CFBundleIdentifier</key>
+    <string>com.cactyvoice.app</string>
+
+    <!--
+        Executable name is "CactyVoice" (not "Cacty") on purpose: the
+        Privacy & Security → Accessibility list labels each row by the
+        executable name, and the original dev build's row is "Cacty".
+        Two indistinguishable "Cacty" rows made it impossible to know
+        which one to toggle. A distinct executable name gives this build
+        its own clearly-labeled "CactyVoice" row.
+    -->
+    <key>CFBundleExecutable</key>
+    <string>CactyVoice</string>
+
+    <key>CFBundleName</key>
+    <string>CactyVoice</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>CactyVoice</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <key>LSMinimumSystemVersion</key>
+    <string>26.0</string>
+
+    <!--
+        LSUIElement = true makes Cacty a menu-bar-only app: no
+        Dock icon, no Command-Tab entry, no Force-Quit listing
+        beyond the menu bar item. This is the correct shape for
+        a PTT-driven background agent — the user's existing
+        workflow stays visible and Cacty's surfaces appear as
+        floating panels when needed.
+    -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+
+    <key>NSHumanReadableCopyright</key>
+    <string>© 2026 Cacty</string>
+
+    <!--
+        Privacy usage descriptions. macOS TCC reads these to show
+        the user a clear "why does this app want X?" prompt the
+        first time each capability is requested. Each string is
+        what the OS displays inside the system permission dialog.
+
+        Phase 1 progressively layers in the capabilities below;
+        the strings are declared up front because TCC enforces
+        their presence and updates require app reinstall (worse
+        UX than overdeclaring).
+    -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Cacty captures your voice while you hold the Fn key so the agent can transcribe your task on-device.</string>
+
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Cacty transcribes your voice on-device while you hold Fn so the agent knows what task you want to run.</string>
+
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Cacty drives other macOS apps in the background to complete tasks you ask for, without taking focus from your current work.</string>
+
+    <key>NSAccessibilityUsageDescription</key>
+    <string>Cacty inspects and operates the windows of other macOS apps so the agent can complete tasks for you without stealing focus.</string>
+</dict>
+</plist>
