@@ -12,6 +12,8 @@
 
 ## 1. What is this?
 
+As applications such as ordering medication, scheduling doctor appointments, and even ordering food require technical knowledge, we can’t expect the elderly or people with neurodiversity-related challenges to operate these new online applications. With Cacty, a user simply needs to make a phone call and give a task for our voice agent to run on a MacBook in the background.
+
 **Cacty Voice turns a phone call into actions on your computer.** You call in and
 say something like *"add a dentist appointment to my calendar tomorrow at 3pm"* or
 *"open TextEdit and draft a thank-you note."* The agent has a short, natural
@@ -22,20 +24,6 @@ happened** — and never claims success it didn't actually observe.
 
 Think of it as **"a phone call to your computer."** No screen, no keyboard — just
 your voice, anywhere you have a phone.
-
-### Why it's interesting
-
-- **Voice → real computer actions.** Most voice agents look things up or call an
-  API. This one operates a full desktop GUI — the same Calendar, Mail, browser,
-  and editor a human uses — through accessibility APIs.
-- **A truthfulness contract.** Computer-use agents love to *claim* they clicked
-  the button. Cacty Voice is architected so the agent's spoken answer is **only
-  ever the literal result** the automation layer returns. If the task fails, you
-  hear the real failure, not a hallucinated "all set!" (See
-  [§ No-hallucination](#the-no-hallucination-contract).)
-- **Two specialized brains.** A fast, voice-tuned **open-weights** model
-  (Nemotron) runs the conversation; a separate computer-use model runs the
-  clicking. Each does what it's best at.
 
 ### How it works (architecture)
 
@@ -52,25 +40,6 @@ your voice, anywhere you have a phone.
   └──────────────────────────────────┘ result └──────────────────────────────┘
          "ears, brain, mouth"                       "hands" on the Mac
 ```
-
-★ = built during this hackathon. The voice bot and Cacty run on the **same Mac**
-(Cacty automates the local machine); for real phone calls the bot stays local and
-Twilio reaches it through an ngrok tunnel. Full rationale in
-[ARCHITECTURE.md](./ARCHITECTURE.md).
-
-#### The no-hallucination contract
-
-The bot's answer to *"did it work?"* is wired to be ground-truth, not generated:
-
-1. `server/cacty_client.py` returns Cacty's raw `{ok, text|error}` — **zero**
-   interpretation.
-2. `server/bot.py`'s `run_computer_task` tool passes that verbatim to the LLM.
-3. The system prompt forbids inventing confirmations: report `ok=true` text as
-   done, read `ok=false` errors plainly, never fabricate.
-
-Real example from our testing — Cacty couldn't reach a blank browser tab and the
-agent said so, instead of pretending: *"I'm unable to create the event — the
-Google Calendar page isn't loading."*
 
 ---
 
@@ -121,8 +90,6 @@ The whole conversational stack runs on **NVIDIA open-weights models**:
 ---
 
 ## 4. What we built **during** the hackathon
-
-Be explicit about old vs. new vs. borrowed:
 
 | | Component | Status |
 |---|---|---|
