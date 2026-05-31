@@ -1,245 +1,196 @@
-> **Building Cacty Voice?** This repo has been extended into a phone-driven Mac
-> automation agent. See **[CACTY_VOICE.md](./CACTY_VOICE.md)** for the project
-> overview, required API keys, and run instructions. The hackathon-starter docs
-> below are kept for reference.
+# 🌵 Cacty Voice
+
+**Call a phone number, speak a task, and an AI agent actually does it on a real Mac — then tells you the truth about what happened.**
+
+> Voice in → conversation → a background computer-use agent clicks through real
+> macOS apps → spoken result. Built at the YC Voice Agents Hackathon on
+> **Pipecat** + **NVIDIA Nemotron** (open-weights STT & LLM).
+
+📖 Deep docs: **[ARCHITECTURE.md](./ARCHITECTURE.md)** · **[CACTY_VOICE.md](./CACTY_VOICE.md)** (setup, permissions, phone) · Original hackathon starter preserved in **[HACKATHON_STARTER.md](./HACKATHON_STARTER.md)**
 
 ---
 
-# YC Voice Agents Hackathon
+## 1. What is this?
 
-Welcome to the YC Voice Agents Hackathon, hosted by [Cekura](https://cekura.com) and [Daily](https://daily.co), in partnership with [NVIDIA](https://nvidia.com), [AWS](https://aws.amazon.com), and [Twilio](https://twilio.com).
+**Cacty Voice turns a phone call into actions on your computer.** You call in and
+say something like *"add a dentist appointment to my calendar tomorrow at 3pm"* or
+*"open TextEdit and draft a thank-you note."* The agent has a short, natural
+conversation to nail down the details, then hands the task to **Cacty** — a macOS
+computer-use agent that drives your real apps (clicking, typing, reading windows)
+in the background. When it's done, the voice agent tells you **exactly what
+happened** — and never claims success it didn't actually observe.
 
-The goal of this event is to learn about building, scaling, evaluating, and continuously improving voice agents.
+Think of it as **"a phone call to your computer."** No screen, no keyboard — just
+your voice, anywhere you have a phone.
 
-## Schedule, rules, and prizes
+### Why it's interesting
 
-This is a one-day event. Please arrive by 8:30. We'll kick things off at 9:00.
+- **Voice → real computer actions.** Most voice agents look things up or call an
+  API. This one operates a full desktop GUI — the same Calendar, Mail, browser,
+  and editor a human uses — through accessibility APIs.
+- **A truthfulness contract.** Computer-use agents love to *claim* they clicked
+  the button. Cacty Voice is architected so the agent's spoken answer is **only
+  ever the literal result** the automation layer returns. If the task fails, you
+  hear the real failure, not a hallucinated "all set!" (See
+  [§ No-hallucination](#the-no-hallucination-contract).)
+- **Two specialized brains.** A fast, voice-tuned **open-weights** model
+  (Nemotron) runs the conversation; a separate computer-use model runs the
+  clicking. Each does what it's best at.
 
-### Schedule
-
-  - 8:00 AM – Doors open & registration
-  - 8:30 AM – Breakfast
-  - 9:00 AM – Welcome / Hackathon begins
-  - 12:00 PM – Lunch
-  - 6:00 PM – Submissions due
-  - 6:00 - 8:00 PM – Dinner, demos, and conversation
-  - 8:00 PM – Judges' presentations
-  - 9:00 PM – We all go home
-
-### General guidance
-
-First of all, please respect the YC space. We very much appreciate YC hosting these events. Stay in the designated areas, clean up after meals, and in general be a good guest.
-
-Build something new for this hackathon. Use the tools from Cekura to evaluate and improve the performance of what you build. Use Pipecat as the orchestration framework for your voice agent. We also encourage you to use the open source models from NVIDIA, but it's okay to use any models that work well for your project.
-
-There will be engineers from Cekura, Daily, NVIDIA, AWS, and Twilio available to help you with your project. Don't hesitate to find us.
-
-Judging will start at 6:00. In general, the judges want to showcase interesting projects rather than just pick winners. So don't worry too much about what the judges are looking for in a project. Build something that demonstrates creativity, is interesting on a technical level, or solves a real problem! But do keep in mind that the judges want to see great examples of using Cekura to improve voice agent performance, and using open source models from NVIDIA.
-
-
-# Tech stack and starting points.
-
-This repo contains two versions of a voice agent built with [Pipecat](https://pipecat.ai).
-
-The demo bot **Field & Flower** is a neighborhood flower shop: callers order a bouquet for delivery while the bot looks up the catalog, captures delivery details, and places the order. All backend calls are mocked, so the starter runs with nothing but AI service keys.
-
-## Version 1 — GPT-4.1
-
-You can start with this before the hackathon, if you want to. Or test GPT-4.1 and Nemotron side-by-side during the hackathon, using Cekura.
-
-This bot only requires a Gradium API key and an OpenAI API key. Sign up for free at [Gradium](https://gradium.ai). We'll provide a code for Gradium credits, during the event.
-
-- **STT:** [Gradium](https://gradium.ai)
-- **LLM:** [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses) (GPT-4.1)
-- **TTS:** [Gradium](https://gradium.ai)
-- **Transports:** SmallWebRTC (local dev) and [Twilio](https://www.twilio.com/en-us) (production telephony)
-- **Deploy target:** [Pipecat Cloud](https://pipecat.daily.co)
-
-## Version 2
-
-NVIDIA models hosted on AWS, available during the hackathon.
+### How it works (architecture)
 
 ```
-  export NVIDIA_ASR_URL=ws://44.241.251.184:8080
-  export NEMOTRON_LLM_URL=http://nemotron-fleet-alb-1322439314.us-west-2.elb.amazonaws.com/v1
-  export NEMOTRON_LLM_MODEL=nvidia/nemotron-3-super
-  ```
-
-- **STT:** [Nemotron Speech Streaming](https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b)
-- **LLM:** [Nemotron 3 Super 120B](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16)
-- **TTS:** [Gradium](https://gradium.ai)
-- **Transports:** SmallWebRTC (local dev) and Twilio (production telephony)
-- **Deploy target:** [Pipecat Cloud](https://pipecat.daily.co)
-
-## Develop locally
-
-Get the bot running over WebRTC in your browser before you push to the cloud or wire up the phone, for a faster iteration loop.
-
-### Prerequisites
-
-- Python 3.11+
-- [`uv`](https://docs.astral.sh/uv/getting-started/installation/) package manager
-- API keys for [OpenAI](https://platform.openai.com) and [Gradium](https://gradium.ai)
-
-### Setup
-
-1. **Clone and enter the server directory:**
-
-   ```bash
-   git clone https://github.com/pipecat-ai/yc-voice-agents-hackathon.git
-   cd yc-voice-agents-hackathon/server
-   ```
-
-2. **Configure API keys:**
-
-   ```bash
-   cp .env.example .env
-   # Edit .env and fill in OPENAI_API_KEY, GRADIUM_API_KEY.
-   # TWILIO_* keys are only needed when you wire up the phone (next section).
-   ```
-
-3. **Install dependencies:**
-
-   ```bash
-   uv sync
-   ```
-
-4. **Run the bot:**
-
-   ```bash
-   # run one or the other of these
-   uv run bot-gpt.py
-   uv run bot-nemotron.py
-   ```
-
-   Open [http://localhost:7860](http://localhost:7860) and click **Connect** to start talking. First launch takes ~20s while Pipecat downloads VAD and turn-detection models.
-
-## Deploy to Pipecat Cloud
-
-Once the bot works locally, deploy to Pipecat Cloud and connect it to a Twilio phone number so anyone can call in.
-
-### Prerequisites
-
-1. [Sign up for Pipecat Cloud](https://pipecat.daily.co/sign-up)
-2. Install the [Pipecat CLI](https://github.com/pipecat-ai/pipecat-cli) and log in:
-
-   ```bash
-   uv tool install pipecat-ai-cli
-   pc cloud auth login
-   ```
-
-### Configure Twilio
-
-1. [Add credits / upgrade your Twilio account](https://twil.io/yc-hack)
-
-2. [Buy a phone number](https://help.twilio.com/articles/223135247) with voice capability.
-
-3. Get your Pipecat Cloud organization name:
-
-   ```bash
-   pc cloud organizations list
-   ```
-
-4. [Create a TwiML Bin](https://www.twilio.com/docs/serverless/twiml-bins/getting-started#create-a-new-twiml-bin) with this configuration:
-
-   ```xml
-   <?xml version="1.0" encoding="UTF-8"?>
-   <Response>
-     <Connect>
-       <Stream url="wss://api.pipecat.daily.co/ws/twilio">
-         <Parameter name="_pipecatCloudServiceHost"
-           value="flower-bot.YOUR_ORG_NAME"/>
-       </Stream>
-     </Connect>
-   </Response>
-   ```
-
-   Replace `YOUR_ORG_NAME` with the org name from step 2.
-
-5. [Attach the TwiML Bin](https://www.twilio.com/docs/serverless/twiml-bins/getting-started#wire-your-twiml-bin-up-to-an-incoming-phone-call) to your Twilio number: Go to [your phone numbers](https://console.twilio.com/go?to=/account/__account__/us1/senders-hub/list/phone-numbers/inventory) → select your
-number → under **Voice Configuration**, set method to the **TwiML Bin** you created → Save.
-
-6. [Optional] Use [Twilio Dev phone](https://www.twilio.com/docs/labs/dev-phone) for testing.
-
-### Review the deployment configuration
-
-Your deployment details are specified in the `pcc-deploy.toml` file. You can learn more about options in the [docs](https://docs.pipecat.ai/api-reference/cli/cloud/deploy#configuration-file-pcc-deploy-toml).
-
-### Upload secrets
-
-```bash
-pc cloud secrets set flower-bot-secrets --file .env
+   📞 You (phone via Twilio, or browser mic via WebRTC)
+        │ audio
+        ▼
+  ┌──────────────────────────────────┐        ┌──────────────────────────────┐
+  │  Voice bot — Pipecat (Python)     │  HTTP  │  Cacty — macOS app (Swift)    │
+  │  • NVIDIA Nemotron STT            │ ─────▶ │  • loopback bridge :8765 ★NEW │
+  │  • NVIDIA Nemotron LLM (dialog)   │  POST  │  • AgentSupervisor → Worker   │
+  │  • Gradium TTS                    │ /task  │  • computer-use loop          │
+  │  • tool: run_computer_task() ★NEW │ ◀───── │  • clicks/types/reads apps    │
+  └──────────────────────────────────┘ result └──────────────────────────────┘
+         "ears, brain, mouth"                       "hands" on the Mac
 ```
 
-This uploads everything from `.env` to Pipecat Cloud's secure storage. The bot reads from there at runtime, so you don't bake keys into the image.
+★ = built during this hackathon. The voice bot and Cacty run on the **same Mac**
+(Cacty automates the local machine); for real phone calls the bot stays local and
+Twilio reaches it through an ngrok tunnel. Full rationale in
+[ARCHITECTURE.md](./ARCHITECTURE.md).
 
-### Deploy
+#### The no-hallucination contract
 
-Build and run your bot on Pipecat Cloud:
+The bot's answer to *"did it work?"* is wired to be ground-truth, not generated:
 
-```bash
-pc cloud deploy
-```
+1. `server/cacty_client.py` returns Cacty's raw `{ok, text|error}` — **zero**
+   interpretation.
+2. `server/bot.py`'s `run_computer_task` tool passes that verbatim to the LLM.
+3. The system prompt forbids inventing confirmations: report `ok=true` text as
+   done, read `ok=false` errors plainly, never fabricate.
 
-Learn more about [cloud builds](https://docs.pipecat.ai/pipecat-cloud/guides/cloud-builds).
+Real example from our testing — Cacty couldn't reach a blank browser tab and the
+agent said so, instead of pretending: *"I'm unable to create the event — the
+Google Calendar page isn't loading."*
 
-### Call your bot
+---
 
-Dial the Twilio number you set up. 🌷
+## 2. Demo (≤ 60 seconds)
 
-## Test your agent with Cekura
+> 📹 **Watch the demo:** _[link here]_  &nbsp;·&nbsp; **Under 60 seconds. Really.**
 
-[Cekura](https://cekura.com) tests and observes voice agents. For this hackathon, use it to **test the Pipecat bot you build in this repo** — run real conversations against it, score the transcripts, and fix what's failing before you demo.
+<!-- Replace the link above with your uploaded clip (Loom/YouTube/MP4). Keep it
+     to a single live take of the loop below — no narration of section 1. -->
+---
 
-### Sign up
+## 3. How we used Pipecat, Nemotron, and Cekura
 
-Create your account at **[dashboard.cekura.ai](https://dashboard.cekura.ai)**. If you're approved for this hackathon, just sign up and your credits will show up automatically. If you don't see them, find someone from the Cekura team, they're on-site.
+### 🛠️ Pipecat — *orchestration (used heavily)*
 
-### Onboarding (or skip it)
+Pipecat is the backbone of the entire voice layer. We use it for:
 
-On first login you'll land on a short setup flow that helps you create your first agent and test. Feel free to click through it — **or hit _Skip_** and jump straight to the dashboard if you'd rather set things up yourself. Either way takes a minute.
+- **The pipeline:** `transport.input → STT → user-aggregator → LLM → TTS →
+  transport.output` assembled in `server/bot.py`.
+- **Tool calling:** the LLM's two direct functions — `run_computer_task` (the
+  bridge to Cacty) and `end_call` — registered via Pipecat's
+  `ToolsSchema` + `register_direct_function`.
+- **Turn-taking & VAD:** Silero VAD + `FilterIncompleteUserTurnStrategies` so the
+  agent waits for complete utterances before dispatching a task.
+- **Dual transport, one codebase:** `SmallWebRTCTransport` for browser iteration
+  **and** `FastAPIWebsocketTransport` + `TwilioFrameSerializer` for real phone
+  calls — selected at runtime by the Pipecat runner.
+- **Telephony plumbing:** the Pipecat runner auto-serves the Twilio TwiML
+  (`-t twilio -x <ngrok-host>`), which made wiring a real phone number genuinely
+  a 5-minute job.
 
-### Recommended: start by testing your agent (via Claude Code)
+### 🧠 NVIDIA Nemotron — *open-weights voice brain (used heavily)*
 
-The fastest path — and what we recommend for the hackathon — is to drive Cekura from **Claude Code** using our MCP server + skills. You stay in your terminal, and Cekura handles agent creation, scenario generation, and running the test.
+The whole conversational stack runs on **NVIDIA open-weights models**:
 
-**1. Install the Cekura skills + MCP** (Claude Code marketplace plugin — bundles the skills, slash commands, and auto-configured MCP server):
+- **STT — Nemotron Speech Streaming** (`server/nvidia_stt.py`): streaming ASR over
+  WebSocket, 16 kHz PCM, with cumulative-transcript stitching.
+- **LLM — Nemotron-3-Super-120B** via vLLM (`server/nemotron_llm.py`): the
+  dialog + tool-calling brain. It handles the clarify→confirm→dispatch flow and
+  emits the `run_computer_task` tool calls with fully-resolved arguments (relative
+  dates expanded, etc.).
+- We wrote a **TTFB-correctness wrapper** (`VLLMOpenAILLMService`) because, for a
+  reasoning model served with thinking enabled, stock Pipecat stops the
+  time-to-first-byte clock on the first *reasoning* token rather than the first
+  *spoken* token — badly understating real voice latency. Our subclass defers the
+  TTFB stop until a user-visible content/tool token actually streams. Thinking is
+  kept **off** for voice latency by default.
+---
 
-```bash
-/plugin marketplace add cekura-ai/cekura-skills
-/plugin install cekura@cekura-skills
-```
+## 4. What we built **during** the hackathon
 
-Repo: [github.com/cekura-ai/cekura-skills](https://github.com/cekura-ai/cekura-skills) · Full setup + other agents (Cursor, Codex, etc.): **[docs.cekura.ai → Claude Code guide](https://docs.cekura.ai/mcp/claude-code-guide)** and **[Skills](https://docs.cekura.ai/mcp/skills)**.
+Be explicit about old vs. new vs. borrowed:
 
-**2. Run an end-to-end test** of your agent with a single command:
+| | Component | Status |
+|---|---|---|
+| 🆕 **New (this hackathon)** | **The entire voice ↔ computer-use application** — see below | **built here** |
+| **Cacty**, the macOS computer-use app (Swift, Gemini-driven, vendored `cua-driver` automation engine) | personal project, predates the event |
+| 🟨 Provided / borrowed | The Pipecat "Field & Flower" starter; NVIDIA Nemotron endpoints; Gradium TTS; Twilio | hackathon-provided |
 
-```
-/cekura-report
-```
+---
 
-This spins up anything from 10–20 evaluators (what Cekura calls test cases), runs scenarios against your Pipecat agent, and gives you back a full report — transcripts, scores, and what failed — so you can iterate fast.
+## 5. Feedback on the tools
 
-> When connecting your agent, **select `Pipecat` as the provider.** Details: [docs.cekura.ai → Pipecat](https://docs.cekura.ai/documentation/integrations/pipecat/automated).
+### NVIDIA Nemotron
 
-## Learn more
+**What it did well**
+- **Tool-calling was reliable.** Nemotron-3-Super produced clean, well-formed
+  `run_computer_task` calls and correctly resolved relative dates ("tomorrow at
+  3pm" → an absolute date) before dispatching — exactly what we needed.
+- **Good conversational discipline.** With a tight system prompt it asked one
+  clarifying question at a time and confirmed before acting, which suits voice.
+- **Streaming STT held up** on real-time mic and phone audio.
+
+**What could be better**
+- **Reasoning vs. voice latency is a sharp edge.** With thinking enabled, the
+  model doesn't emit spoken content until it finishes reasoning, so naive TTFB
+  metrics are wildly optimistic and the *felt* latency is high. We had to write a
+  subclass to even measure it correctly. A first-class "reasoning, but stream a
+  short spoken ack first" mode for voice would be huge.
+- **Thinking-token leakage.** Unless the vLLM server runs a reasoning parser,
+  chain-of-thought can land in the `content` field and get **spoken aloud**. A
+  safer default (route reasoning to a separate field) would prevent foot-guns.
+- A clearer, copy-paste **"Nemotron for low-latency voice" recipe** (thinking off,
+  parser config, recommended decoding params) would have saved us time.
 
 ### Pipecat
 
-- [Pipecat Documentation](https://docs.pipecat.ai/)
-- [Pipecat Cloud Deployment](https://docs.pipecat.ai/pipecat-cloud/introduction)
-- [Pipecat Examples](https://github.com/pipecat-ai/pipecat-examples)
-- [Pipecat Discord](https://discord.gg/pipecat)
+**What it did well**
+- The **single-codebase, multi-transport** design (WebRTC for dev, Twilio for
+  prod) is excellent — we flipped to a real phone number with one CLI flag.
+- **Auto-served Twilio TwiML** (`-t twilio -x <host>`) removed an entire class of
+  webhook busywork.
+- Direct-function tool registration made adding our custom `run_computer_task`
+  trivial.
 
-### Twilio
+**What could be better**
+- The exact **local Twilio invocation** wasn't obvious from the docs — we read the
+  runner source to find `-t twilio -x <ngrok-host>` and that the webhook should
+  point at `POST /` (not a hand-written TwiML Bin). A short "local telephony"
+  doc page would help.
+- The `av`/`opencv` duplicate-dylib warning on import is noisy and looks scary
+  even though it's benign.
 
-- [Twilio Developer Hub](https://www.twilio.com/en-us/developers)
-- [Twilio Documentation](https://www.twilio.com/docs)
-- [Twilio Dev phone](https://www.twilio.com/docs/labs/dev-phone)
+---
 
-### Cekura
+## Setup & run
 
-- [Claude Code guide](https://docs.cekura.ai/mcp/claude-code-guide) — MCP + skills setup
-- [Cekura skills](https://docs.cekura.ai/mcp/skills) — all slash commands
-- [Pipecat integration](https://docs.cekura.ai/documentation/integrations/pipecat/automated)
-- [Cekura docs](https://docs.cekura.ai) · [dashboard](https://dashboard.cekura.ai)
+```bash
+# 1. keys
+cp server/.env.example server/.env      # add GRADIUM_API_KEY; GEMINI_API_KEY for Cacty
+
+# 2. one command: build Cacty, launch it, grant permissions, start the bot
+./run.sh
+```
+
+Then open **http://localhost:7860**, click **Connect**, and talk. Full
+walkthrough (incl. the macOS permission grant and adding a phone number) is in
+**[CACTY_VOICE.md](./CACTY_VOICE.md)**.
+
+---
+
+*Built at the YC Voice Agents Hackathon (Cekura × Daily, with NVIDIA, AWS,
+Twilio). Voice on Pipecat; open-weights brain on NVIDIA Nemotron.*
